@@ -78,7 +78,7 @@ def timeDelayCalculator(tempInitial,tempStep,h,start,stop,step):
 	
 	return calcTemp,calcTime
 
-def timeSumCalculator():
+def timeSumCalculator(h):
 	timeStepList = [0,0.2,0.4,0.6,0.8,1]
 	tempStepList = [25,43,55,63,65,65]
 
@@ -87,7 +87,7 @@ def timeSumCalculator():
 	for i in range(len(timeStepList)-1):
 		tempInitial = 0
 		tempStep = tempStepList[i+1]-tempStepList[i]
-		convolution = timeDelayCalculator(tempInitial,tempStep,153.8,timeStepList[i],100,0.1)
+		convolution = timeDelayCalculator(tempInitial,tempStep,h,timeStepList[i],100,0.1)
 
 		for i in range(len(convolution[0])):
 			summedCalc[i] += convolution[0][i]
@@ -97,16 +97,35 @@ def timeSumCalculator():
 	
 	return summedCalc , convolution[1]
 
+def solver():
+	guess = 130
+	solve_temp = 45
+	solve_time = 30
+	solve = timeSumCalculator(guess)[0][300]
+
+	while abs(solve-solve_temp)>0.001:
+		'''
+		guess = guess+(solve_temp-solve)*0.1
+		solve = coupledLumped(tempInitial,tempStep,guess,solve_time)
+		'''
+		guess = guess+(solve_temp-solve)*2
+		solve = timeSumCalculator(guess)[0][300]
+		#solve = timeDelayCalculator(tempInitial,tempStep,guess,1,100,0.1)[0][300]
+
+		print solve
+		print guess
+		
+	return guess
 
 lumpedBlock = lumped(tempInitial, tempStep, hBlock, nBlock, 100)
 
 #coupledlumpedBlock2 = coupledCalculator(tempInitial, tempStep, hBlock, 100)
-coupledlumpedBlock2 = coupledCalculator(tempInitial, tempStep, 153.8, 100)
-coupledlumpedBlock = timeSumCalculator()
+coupledlumpedBlock2 = coupledCalculator(tempInitial, tempStep, 153.73, 100)
+#coupledlumpedBlock = timeDelayCalculator(tempInitial,tempStep,solver(),1,100,0.1)
+coupledlumpedBlock = timeSumCalculator(solver())
 
-#print coupledlumpedBlock
-print len(coupledlumpedBlock[0])
-print len(coupledlumpedBlock[1])
+# 1 second day on step - 158.646032197
+# Temperature Profile - 154.54655467
 
 plt.xlabel('Time')
 plt.ylabel('Temperature')
