@@ -87,7 +87,7 @@ def timeSumCalculator(h):
 	for i in range(len(timeStepList)-1):
 		tempInitial = 0
 		tempStep = tempStepList[i+1]-tempStepList[i]
-		convolution = timeDelayCalculator(tempInitial,tempStep,h,timeStepList[i],100,0.1)
+		convolution = timeDelayCalculator(tempInitial,tempStep,h,timeStepList[i+1],100,0.1)
 
 		for i in range(len(convolution[0])):
 			summedCalc[i] += convolution[0][i]
@@ -97,44 +97,80 @@ def timeSumCalculator(h):
 	
 	return summedCalc , convolution[1]
 
-def solver():
+def solverDelay(time):
 	guess = 130
 	solve_temp = 45
-	solve_time = 30
+	solve_time = time
 	solve = timeSumCalculator(guess)[0][300]
 
 	while abs(solve-solve_temp)>0.001:
-		'''
-		guess = guess+(solve_temp-solve)*0.1
-		solve = coupledLumped(tempInitial,tempStep,guess,solve_time)
-		'''
 		guess = guess+(solve_temp-solve)*2
 		solve = timeSumCalculator(guess)[0][300]
-		#solve = timeDelayCalculator(tempInitial,tempStep,guess,1,100,0.1)[0][300]
-
-		print solve
-		print guess
-		
+				
+	print guess		
 	return guess
+
+def solverCoupled(time):
+	guess = 130
+	solve_temp = 45
+	solve_time = time
+	solve = timeSumCalculator(guess)[0][300]
+
+	while abs(solve-solve_temp)>0.001:
+		
+		guess = guess+(solve_temp-solve)*2
+		solve = coupledLumped(tempInitial,tempStep,guess,solve_time)
+		
+	print guess	
+	return guess
+
 
 lumpedBlock = lumped(tempInitial, tempStep, hBlock, nBlock, 100)
 
 #coupledlumpedBlock2 = coupledCalculator(tempInitial, tempStep, hBlock, 100)
-coupledlumpedBlock2 = coupledCalculator(tempInitial, tempStep, 153.73, 100)
-#coupledlumpedBlock = timeDelayCalculator(tempInitial,tempStep,solver(),1,100,0.1)
-coupledlumpedBlock = timeSumCalculator(solver())
+
+#coupledlumpedBlockDelay = timeDelayCalculator(tempInitial,tempStep,solver(),1,100,0.1)
+
+
+coupledlumpedBlock2 = coupledCalculator(tempInitial, tempStep, solverCoupled(30), 100)
+coupledlumpedBlockDelay = timeSumCalculator(solverDelay(30))
+
+coupledlumpedBlockminus2 = coupledCalculator(tempInitial, tempStep, solverCoupled(28), 100)
+coupledlumpedBlockplus2 = coupledCalculator(tempInitial, tempStep, solverCoupled(32), 100)
 
 # 1 second day on step - 158.646032197
 # Temperature Profile - 154.54655467
-
+plt.figure()
 plt.xlabel('Time')
 plt.ylabel('Temperature')
 plt.title('Temperature vs. Time of Lumped Block')
 plt.grid(True)
-plt.plot(lumpedBlock[1],lumpedBlock[0],label = "Lumped - h~131")
-plt.plot(coupledlumpedBlock[1],coupledlumpedBlock[0], label = "Coupled Lumped - h~154")
-plt.plot(coupledlumpedBlock2[1],coupledlumpedBlock2[0], label = "Uncorrected Coupled Lumped - h~131")
-#plt.legend(loc=4)
+#plt.plot(lumpedBlock[1],lumpedBlock[0],label = "Lumped - h~131")
+#plt.plot(coupledlumpedBlock[1],coupledlumpedBlock[0], label = "Coupled Lumped - h~154")
+
+plt.plot(coupledlumpedBlock2[1],coupledlumpedBlock2[0], label = "Corrected Coupled Lumped - h~153.732")
+plt.plot(coupledlumpedBlockminus2[1],coupledlumpedBlockminus2[0], label = "Minus 2 Seconds - h~163.903")
+plt.plot(coupledlumpedBlockplus2[1],coupledlumpedBlockplus2[0], label = "Plus 2 Seconds - h~144.809")
+
+plt.legend(loc=4)
+plt.plot([0,100] ,[45,45])
+plt.plot([30,30] ,[0,65])
+plt.axis([0, 100, 20, 65])
+
+plt.figure()
+plt.xlabel('Time')
+plt.ylabel('Temperature')
+plt.title('Temperature vs. Time of Lumped Block')
+plt.grid(True)
+
+#plt.plot(lumpedBlockDelay[1],lumpedBlockDelay[0],label = "Delay - h~154.54")
+plt.plot(coupledlumpedBlockDelay[1],coupledlumpedBlockDelay[0], label = "Delayed Timestep - h~154.54")
+
+plt.plot(coupledlumpedBlock2[1],coupledlumpedBlock2[0], label = "Corrected Coupled Lumped - h~153.732")
+#plt.plot(coupledlumpedBlockminus2[1],coupledlumpedBlockminus2[0], label = "Minus 2 Seconds - h~163.903")
+#plt.plot(coupledlumpedBlockplus2[1],coupledlumpedBlockplus2[0], label = "Plus 2 Seconds - h~144.809")
+
+plt.legend(loc=4)
 plt.plot([0,100] ,[45,45])
 plt.plot([30,30] ,[0,65])
 plt.axis([0, 100, 20, 65])
